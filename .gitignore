@@ -1,12 +1,11 @@
-# Node dependencies
+# Exclude node modules dependencies (huge folder)
 node_modules/
 
-# Local databases
-*.db
+# Exclude temporary SQLite locking files
 *.db-journal
 *.db-shm
 *.db-wal
 
-# Operating System files
+# Exclude operating system metadata
 .DS_Store
 Thumbs.db
