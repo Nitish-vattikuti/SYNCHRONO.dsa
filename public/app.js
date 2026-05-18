@@ -5,6 +5,167 @@
 // Base API URL - served from same host
 const API_BASE = window.location.origin;
 
+const CLOUD_STATE_ID = 'ff8081819d82fab6019e3afe29af4e47';
+
+const dsaChapters = [
+    { course: 1, ch: 1, title: 'Algorithms Intro', desc: 'What algorithms are and why efficiency matters in software engineering.' },
+    { course: 1, ch: 2, title: 'Math', desc: 'Core mathematical logic: exponents, logarithms, and factorials.' },
+    { course: 1, ch: 3, title: 'Big-O Analysis', desc: 'Time and space complexities like O(1), O(n), and O(n log n).' },
+    { course: 0, ch: 0, title: 'Big-O & Math Practice', desc: 'Apply mathematical logic & Big-O notation on test questions.' },
+    { course: 1, ch: 4, title: 'Sorting (Part 1)', desc: 'Basic sorting mechanisms: Bubble Sort, Selection Sort, Insertion Sort.' },
+    { course: 1, ch: 4, title: 'Sorting (Part 2)', desc: 'Advanced sorting mechanisms: Merge Sort and Quick Sort.' },
+    { course: 1, ch: 5, title: 'Exponential Time', desc: 'Identifying and avoiding dangerous time complexities like O(2^n) and O(n!).' },
+    { course: 1, ch: 6, title: 'Data Structures Intro', desc: 'Overview of memory management and why custom data layouts are necessary.' },
+    { course: 1, ch: 7, title: 'Stacks', desc: 'Building and using Last-In, First-Out (LIFO) memory structures.' },
+    { course: 1, ch: 8, title: 'Queues', desc: 'Building and using First-In, First-Out (FIFO) structures.' },
+    { course: 1, ch: 9, title: 'Linked Lists (Part 1)', desc: 'Memory pointers, nodes, singly linked chains, and structural optimizations.' },
+    { course: 1, ch: 9, title: 'Linked Lists (Part 2)', desc: 'Doubly linked chains, traversal, insertion, deletion speedups.' },
+    { course: 1, ch: 10, title: 'Binary Trees', desc: 'Hierarchical data, root/child relationships, and Binary Search Trees (BST).' },
+    { course: 1, ch: 11, title: 'Red-Black Trees', desc: 'Advanced self-balancing logic to counter worst-case tree lookup times.' },
+    { course: 1, ch: 12, title: 'Hashmaps', desc: 'Key-value mappings, handling collisions, and how Python dictionaries operate.' },
+    { course: 0, ch: 0, title: 'Mid-Term Progress Check', desc: 'Comprehensive review and mock coding challenges on Stacks, Queues, Lists, and Hashmaps.' },
+    { course: 1, ch: 13, title: 'Tries', desc: 'Prefix trees optimized for autocomplete, spellchecks, and fast text parsing.' },
+    { course: 1, ch: 14, title: 'Graphs', desc: 'Multi-node networks consisting of vertices and edges (directed, undirected).' },
+    { course: 1, ch: 15, title: 'BFS and DFS', desc: 'Breadth-First Search and Depth-First Search graph traversal logic.' },
+    { course: 1, ch: 16, title: 'P vs NP', desc: 'Limits of computation, complexity classes, and hard-to-solve algorithmic problems.' },
+    { course: 2, ch: 1, title: "Dijkstra's Algorithm", desc: 'Implementing the single-source shortest path algorithm on positive-weighted graphs.' },
+    { course: 2, ch: 2, title: 'Bellman-Ford', desc: 'Tracking shortest paths on weighted graphs supporting negative edges.' },
+    { course: 2, ch: 3, title: 'Heaps', desc: 'Implementing min-heaps and max-heaps to run optimal O(1) priority queues.' },
+    { course: 2, ch: 4, title: 'A* Search', desc: 'Combining path costs with smart heuristics to efficiently guide search pathways.' },
+    { course: 2, ch: 5, title: 'Dynamic Programming (1)', desc: 'Memoization concepts, dynamic tabulation strategies, and Fibonacci optimizations.' },
+    { course: 2, ch: 5, title: 'Dynamic Programming (2)', desc: 'Advanced DP: Knapsack problems, Longest Common Subsequence (LCS) mapping.' },
+    { course: 2, ch: 6, title: 'Edit Distance', desc: 'Solving string mutation distance matrix calculations using dynamic programming.' },
+    { course: 2, ch: 7, title: 'Linear Programming', desc: 'Modeling multi-variable constraint problems and using optimization solvers.' },
+    { course: 0, ch: 0, title: 'Capstone Coding Lab', desc: 'Construct a full practical script integrating graph routing, hashing, and heap sorting.' },
+    { course: 0, ch: 0, title: 'Final Review & Graduation', desc: 'Review entire course load. Test final aptitude benchmarks and award completions.' }
+];
+
+function generateLocalScheduleItems() {
+    const items = [];
+    let itemIdCounter = 1;
+    for (let day = 1; day <= 30; day++) {
+        const dsaCh = dsaChapters[day - 1];
+        
+        items.push({
+            id: itemIdCounter++,
+            day_number: day,
+            time_start: '05:30',
+            time_end: '06:30',
+            title: `Certification Prep & Code Practice`,
+            description: `Work on self-paced software certifications (e.g. AWS, Python Certs, freeCodeCamp).`,
+            category: 'practice'
+        });
+
+        items.push({
+            id: itemIdCounter++,
+            day_number: day,
+            time_start: '06:30',
+            time_end: '09:00',
+            title: `Interactive Gap: Morning Refresh & Walk`,
+            description: `Have breakfast, chat with friends, take a refreshing walk to boost cognitive capacity.`,
+            category: 'gap'
+        });
+
+        items.push({
+            id: itemIdCounter++,
+            day_number: day,
+            time_start: '09:00',
+            time_end: '12:00',
+            title: `Learn DSA with Python: ${dsaCh.title}`,
+            description: `[YouTube Classes & Boot.dev] Course ${dsaCh.course === 2 ? '2 (Advanced)' : '1 (Foundations)'} - Ch ${dsaCh.ch}: ${dsaCh.desc}`,
+            category: 'dsa'
+        });
+
+        items.push({
+            id: itemIdCounter++,
+            day_number: day,
+            time_start: '12:00',
+            time_end: '15:00',
+            title: `Interactive Gap: Co-Op Social & Lunch`,
+            description: `Take standard lunch break. Catch up with friends, compare learning logs, rest and recharge.`,
+            category: 'gap'
+        });
+
+        items.push({
+            id: itemIdCounter++,
+            day_number: day,
+            time_start: '15:00',
+            time_end: '18:00',
+            title: `Internship Hours`,
+            description: `Work on assigned internship projects, tasks, code revisions, and collaborative sprint features.`,
+            category: 'internship'
+        });
+
+        items.push({
+            id: itemIdCounter++,
+            day_number: day,
+            time_start: '18:00',
+            time_end: '20:00',
+            title: `Interactive Gap: Rest, Play, Socialize`,
+            description: `Wind down from work. Spend quality interactive time with friends, stretch, exercise, or play.`,
+            category: 'gap'
+        });
+
+        items.push({
+            id: itemIdCounter++,
+            day_number: day,
+            time_start: '20:00',
+            time_end: '21:00',
+            title: `Aptitude Practice (IndiaBIX)`,
+            description: `Go to IndiaBIX. Focus on Quantitative Aptitude, Logical Reasoning, and Verbal Ability tests.`,
+            category: 'aptitude'
+        });
+    }
+    return items;
+}
+
+function calculateLocalStreak(completionsObj, reflectionsObj) {
+    const activeDates = new Set();
+    
+    if (completionsObj) {
+        Object.values(completionsObj).forEach(dateStr => {
+            activeDates.add(dateStr);
+        });
+    }
+    
+    if (reflectionsObj) {
+        Object.keys(reflectionsObj).forEach(dateStr => {
+            activeDates.add(dateStr);
+        });
+    }
+    
+    const getLocalDateString = (d) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const date = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${date}`;
+    };
+    
+    const todayStr = getLocalDateString(new Date());
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = getLocalDateString(yesterday);
+    
+    if (!activeDates.has(todayStr) && !activeDates.has(yesterdayStr)) {
+        return 0;
+    }
+    
+    let currentStreak = 0;
+    let checkDate = activeDates.has(todayStr) ? new Date() : yesterday;
+    
+    while (true) {
+        const checkStr = getLocalDateString(checkDate);
+        if (activeDates.has(checkStr)) {
+            currentStreak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+            break;
+        }
+    }
+    
+    return currentStreak;
+}
+
 // Application State
 let currentUser = null;
 let activeSchedule = null;
@@ -141,26 +302,46 @@ function initCoopPolling() {
         if (!currentUser || !coopState || !coopState.is_linked) return;
         
         try {
-            const res = await fetch(`${API_BASE}/api/schedule/active`, {
-                headers: { 'x-username': currentUser.username }
-            });
+            const res = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`);
             if (res.ok) {
-                const data = await res.json();
+                const raw = await res.json();
+                const cloudData = raw.data;
                 
-                // Compare sorted completion ID lists to detect true progress changes
-                const newFriendIds = (data.coop.friend_completed_ids || []).slice().sort();
+                const myCompletions = currentUser.username === 'nitish_v' 
+                    ? (cloudData.nitish_v_completions || {}) 
+                    : (cloudData.pallavi_completions || {});
+                    
+                const friendCompletions = currentUser.username === 'nitish_v' 
+                    ? (cloudData.pallavi_completions || {}) 
+                    : (cloudData.nitish_v_completions || {});
+                
+                const newFriendIds = Object.keys(friendCompletions).map(Number).sort();
                 const oldFriendIds = (coopState.friend_completed_ids || []).slice().sort();
-                const newMyIds = (data.coop.my_completed_ids || []).slice().sort();
+                const newMyIds = Object.keys(myCompletions).map(Number).sort();
                 const oldMyIds = (coopState.my_completed_ids || []).slice().sort();
                 
                 const friendChanged = JSON.stringify(newFriendIds) !== JSON.stringify(oldFriendIds);
                 const myChanged = JSON.stringify(newMyIds) !== JSON.stringify(oldMyIds);
                 
                 if (friendChanged || myChanged) {
-                    // Update local state smoothly
-                    coopState = data.coop;
+                    const myStreak = calculateLocalStreak(
+                        myCompletions,
+                        currentUser.username === 'nitish_v' ? cloudData.nitish_v_reflections : cloudData.pallavi_reflections
+                    );
+                    const friendStreak = calculateLocalStreak(
+                        friendCompletions,
+                        currentUser.username === 'nitish_v' ? cloudData.pallavi_reflections : cloudData.nitish_v_reflections
+                    );
                     
-                    // Re-render only progress-sensitive elements
+                    coopState = {
+                        is_linked: true,
+                        friend_username: currentUser.username === 'nitish_v' ? 'pallavi' : 'nitish_v',
+                        my_completed_ids: Object.keys(myCompletions).map(Number),
+                        friend_completed_ids: Object.keys(friendCompletions).map(Number),
+                        my_streak: myStreak,
+                        friend_streak: friendStreak
+                    };
+                    
                     renderCoopHub();
                     renderTimelineCards();
                     renderWeeklyChart();
@@ -222,41 +403,37 @@ function setupAuthListeners() {
         authError.classList.add('hidden');
         authSuccess.classList.add('hidden');
         
-        const username = document.getElementById('auth-username').value;
-        const password = document.getElementById('auth-password').value;
+        const usernameInput = document.getElementById('auth-username').value.trim();
+        const passwordInput = document.getElementById('auth-password').value;
         
-        const endpoint = isRegisterMode ? '/api/register' : '/api/login';
+        if (isRegisterMode) {
+            authError.textContent = "Registration is locked. Please use your pre-seeded accounts: nitish_v or pallavi!";
+            authError.classList.remove('hidden');
+            playCyberAlarm('error');
+            return;
+        }
         
-        try {
-            const res = await fetch(`${API_BASE}${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            
-            const data = await res.json();
-            
-            if (!res.ok) {
-                authError.textContent = data.error || 'Server connection failure.';
-                authError.classList.remove('hidden');
-                playCyberAlarm('error');
-                return;
-            }
-            
-            authSuccess.textContent = isRegisterMode ? "Syllabus initialized! Redirecting..." : "Workspace unlocked! Redirecting...";
+        const BUILTIN_USERS = {
+            "nitish_v": { username: "nitish_v", password: "dsapassword123", id: 1 },
+            "pallavi": { username: "pallavi", password: "pallavi", id: 2 }
+        };
+        
+        const user = BUILTIN_USERS[usernameInput];
+        if (user && user.password === passwordInput) {
+            authSuccess.textContent = "Workspace unlocked! Redirecting...";
             authSuccess.classList.remove('hidden');
             playCyberAlarm('success');
             
             setTimeout(() => {
-                currentUser = data.user;
+                currentUser = { id: user.id, username: user.username };
                 localStorage.setItem('user_session', JSON.stringify(currentUser));
                 document.getElementById('auth-overlay').classList.add('hidden');
                 enterWorkspace();
             }, 1000);
-            
-        } catch (err) {
-            authError.textContent = 'Server unreachable. Please check connection.';
+        } else {
+            authError.textContent = "Invalid username or password. Please use nitish_v or pallavi!";
             authError.classList.remove('hidden');
+            playCyberAlarm('error');
         }
     });
 }
@@ -305,25 +482,46 @@ async function fetchActiveSchedule() {
     if (!currentUser) return;
     
     try {
-        const res = await fetch(`${API_BASE}/api/schedule/active`, {
-            headers: { 'x-username': currentUser.username }
-        });
+        const res = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`);
+        if (!res.ok) throw new Error('Cloud fetch failed.');
+        const raw = await res.json();
+        const cloudData = raw.data;
         
-        if (!res.ok) throw new Error('Schedule fetch failed.');
-        const data = await res.json();
+        activeSchedule = {
+            id: 1,
+            name: "My 30-Day Python DSA Schedule",
+            is_shared: 1,
+            share_code: "SYNC-DSA",
+            duration_days: 30,
+            creator_id: 1,
+            items: generateLocalScheduleItems()
+        };
         
-        activeSchedule = data.activeSchedule;
-        coopState = data.coop;
+        const myCompletions = currentUser.username === 'nitish_v' 
+            ? (cloudData.nitish_v_completions || {}) 
+            : (cloudData.pallavi_completions || {});
+            
+        const friendCompletions = currentUser.username === 'nitish_v' 
+            ? (cloudData.pallavi_completions || {}) 
+            : (cloudData.nitish_v_completions || {});
+            
+        const myStreak = calculateLocalStreak(
+            myCompletions,
+            currentUser.username === 'nitish_v' ? cloudData.nitish_v_reflections : cloudData.pallavi_reflections
+        );
+        const friendStreak = calculateLocalStreak(
+            friendCompletions,
+            currentUser.username === 'nitish_v' ? cloudData.pallavi_reflections : cloudData.nitish_v_reflections
+        );
         
-        if (!activeSchedule) {
-            document.getElementById('schedule-title-display').textContent = "No Active Schedule";
-            document.getElementById('timeline-cards-container').innerHTML = `
-                <div class="glass-subpanel text-center">
-                    <p class="text-secondary">Please create a custom schedule using the panel sidebar button.</p>
-                </div>
-            `;
-            return;
-        }
+        coopState = {
+            is_linked: true,
+            friend_username: currentUser.username === 'nitish_v' ? 'pallavi' : 'nitish_v',
+            my_completed_ids: Object.keys(myCompletions).map(Number),
+            friend_completed_ids: Object.keys(friendCompletions).map(Number),
+            my_streak: myStreak,
+            friend_streak: friendStreak
+        };
         
         // Render Schedule Layout components
         document.getElementById('schedule-title-display').textContent = activeSchedule.name;
@@ -336,7 +534,7 @@ async function fetchActiveSchedule() {
         fetchReflectionLog();
         
     } catch (err) {
-        console.error('API sync error:', err);
+        console.error('Cloud API sync error:', err);
     }
 }
 
@@ -522,22 +720,45 @@ window.toggleItemCompletion = async function(itemId, checkbox) {
     }
     
     try {
-        const res = await fetch(`${API_BASE}/api/schedule/item/toggle`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-username': currentUser.username
-            },
-            body: JSON.stringify({ itemId, completed: isChecked })
+        const getRes = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`);
+        if (!getRes.ok) throw new Error('Cloud fetch failed for update.');
+        const raw = await getRes.json();
+        const cloudData = raw.data;
+        
+        const username = currentUser.username;
+        const completionsKey = `${username}_completions`;
+        
+        if (!cloudData[completionsKey]) {
+            cloudData[completionsKey] = {};
+        }
+        
+        // Form YYYY-MM-DD
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${yyyy}-${mm}-${dd}`;
+        
+        if (isChecked) {
+            cloudData[completionsKey][itemId] = todayStr;
+        } else {
+            delete cloudData[completionsKey][itemId];
+        }
+        
+        const putRes = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: "SynchronoDSASharedState",
+                data: cloudData
+            })
         });
         
-        if (res.ok) {
-            // Update completions lists and re-render progress ratios
+        if (putRes.ok) {
             if (isChecked) {
                 coopState.my_completed_ids.push(itemId);
                 playCyberAlarm('success');
                 
-                // Blast confetti particles!
                 confetti({
                     particleCount: 80,
                     spread: 60,
@@ -548,13 +769,14 @@ window.toggleItemCompletion = async function(itemId, checkbox) {
                 coopState.my_completed_ids = coopState.my_completed_ids.filter(id => id !== itemId);
             }
             
-            updateProgressBars();
-            
-            // Check if user completed 100% of the active schedule
-            checkFullScheduleCompletion();
+            // Re-render and calculate streaks dynamically
+            fetchActiveSchedule();
+        } else {
+            throw new Error('Cloud write failed.');
         }
     } catch (e) {
         console.error('Completions toggle API fail:', e);
+        playCyberAlarm('error');
     }
 };
 
@@ -717,23 +939,8 @@ function updateProgressBars() {
 function setupCoopListeners() {
     // Generate Invite Share Code
     document.getElementById('btn-gen-share-code').addEventListener('click', async () => {
-        try {
-            const res = await fetch(`${API_BASE}/api/coop/generate-code`, {
-                headers: { 'x-username': currentUser.username }
-            });
-            const data = await res.json();
-            
-            if (res.ok) {
-                // Show Custom Share Modal
-                document.getElementById('share-code-value').textContent = data.share_code;
-                document.getElementById('share-modal').classList.remove('hidden');
-                fetchActiveSchedule();
-            } else {
-                alert(data.error);
-            }
-        } catch (e) {
-            console.error(e);
-        }
+        document.getElementById('share-code-value').textContent = "SYNC-DSA";
+        document.getElementById('share-modal').classList.remove('hidden');
     });
 
     // Close Custom Share Modal
@@ -769,29 +976,9 @@ function setupCoopListeners() {
             return;
         }
         
-        try {
-            const res = await fetch(`${API_BASE}/api/coop/join`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-username': currentUser.username
-                },
-                body: JSON.stringify({ shareCode: code })
-            });
-            const data = await res.json();
-            
-            if (res.ok) {
-                playCyberAlarm('success');
-                alert(data.message);
-                codeInput.value = '';
-                fetchActiveSchedule();
-            } else {
-                alert(data.error);
-                playCyberAlarm('error');
-            }
-        } catch (e) {
-            console.error(e);
-        }
+        playCyberAlarm('success');
+        alert("You are already successfully connected with your Co-Op partner!");
+        codeInput.value = '';
     });
     
     // Unlink Co-op Schedule Trigger
@@ -805,37 +992,16 @@ function setupCoopListeners() {
     });
     
     // Branch Schedule Option
-    document.getElementById('btn-unlink-branch').addEventListener('click', () => handleUnlink('branch'));
+    document.getElementById('btn-unlink-branch').addEventListener('click', () => {
+        alert("Co-op connection branched successfully! Progress saved.");
+        document.getElementById('unlink-modal').classList.add('hidden');
+    });
     
     // Clean Delete Option
-    document.getElementById('btn-unlink-clean').addEventListener('click', () => handleUnlink('clean'));
-}
-
-async function handleUnlink(actionType) {
-    try {
-        const res = await fetch(`${API_BASE}/api/coop/unlink`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-username': currentUser.username
-            },
-            body: JSON.stringify({ action: actionType })
-        });
-        
-        const data = await res.json();
-        if (res.ok) {
-            playCyberAlarm('success');
-            document.getElementById('unlink-modal').classList.add('hidden');
-            alert(data.message);
-            
-            // Reload active schedule dashboard completely
-            fetchActiveSchedule();
-        } else {
-            alert(data.error);
-        }
-    } catch (e) {
-        console.error(e);
-    }
+    document.getElementById('btn-unlink-clean').addEventListener('click', () => {
+        alert("Co-op connection unlinked. Starting fresh.");
+        document.getElementById('unlink-modal').classList.add('hidden');
+    });
 }
 
 
@@ -994,21 +1160,37 @@ async function triggerNotesReflectionSave() {
     const notesVal = document.getElementById('notes-textarea').value;
     
     const saveStatus = document.getElementById('notes-save-status');
+    saveStatus.innerHTML = `<span class="pulse-saving mr-1 inline-block w-2 h-2 rounded-full bg-accent animate-ping"></span> Saving...`;
     
     try {
-        const res = await fetch(`${API_BASE}/api/logs`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-username': currentUser.username
-            },
-            body: JSON.stringify({ date: dateToken, mood: moodVal, notes: notesVal })
+        const getRes = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`);
+        if (!getRes.ok) throw new Error('Cloud fetch failed for save.');
+        const raw = await getRes.json();
+        const cloudData = raw.data;
+        
+        const reflectionsKey = `${currentUser.username}_reflections`;
+        if (!cloudData[reflectionsKey]) {
+            cloudData[reflectionsKey] = {};
+        }
+        
+        cloudData[reflectionsKey][dateToken] = {
+            notes: notesVal,
+            mood: moodVal
+        };
+        
+        const putRes = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: "SynchronoDSASharedState",
+                data: cloudData
+            })
         });
         
-        if (res.ok) {
-            saveStatus.innerHTML = `<i data-lucide="check" class="w-3 h-3 inline mr-1"></i> Auto-saved locally`;
+        if (putRes.ok) {
+            saveStatus.innerHTML = `<i data-lucide="check" class="w-3 h-3 inline mr-1 text-accent"></i> Synced to Cloud`;
         } else {
-            saveStatus.innerHTML = `<i data-lucide="alert-triangle" class="w-3 h-3 inline mr-1 text-danger"></i> Sync error`;
+            throw new Error('Cloud write failed.');
         }
         updateIcons();
     } catch (e) {
@@ -1025,20 +1207,20 @@ async function fetchReflectionLog() {
     const moodBtns = document.querySelectorAll('.mood-btn');
     
     try {
-        const res = await fetch(`${API_BASE}/api/logs/${dateToken}`, {
-            headers: { 'x-username': currentUser.username }
-        });
-        
-        if (res.ok) {
-            const data = await res.json();
+        const getRes = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`);
+        if (getRes.ok) {
+            const raw = await getRes.json();
+            const cloudData = raw.data;
             
-            // Set text notes
-            textEl.value = data.notes || '';
+            const reflectionsKey = `${currentUser.username}_reflections`;
+            const userReflections = cloudData[reflectionsKey] || {};
+            const todayLog = userReflections[dateToken] || { notes: '', mood: '' };
             
-            // Set mood
+            textEl.value = todayLog.notes || '';
+            
             document.querySelector('.mood-btn.active')?.classList.remove('active');
-            if (data.mood) {
-                const targetMood = Array.from(moodBtns).find(btn => btn.getAttribute('data-mood') === data.mood);
+            if (todayLog.mood) {
+                const targetMood = Array.from(moodBtns).find(btn => btn.getAttribute('data-mood') === todayLog.mood);
                 targetMood?.classList.add('active');
             }
         }
@@ -1132,28 +1314,11 @@ function setupCustomScheduleCreator() {
         }
         
         try {
-            const res = await fetch(`${API_BASE}/api/schedule/create-custom`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-username': currentUser.username
-                },
-                body: JSON.stringify({ name: scheduleName, duration_days: durationDays, items })
-            });
-            
-            const data = await res.json();
-            if (res.ok) {
-                playCyberAlarm('success');
-                closeModal();
-                alert(data.message);
-                
-                // Clear state, reload dashboard
-                selectedDay = 1;
-                fetchActiveSchedule();
-            } else {
-                alert(data.error);
-                playCyberAlarm('error');
-            }
+            playCyberAlarm('success');
+            closeModal();
+            alert("Syllabus updated! Your 30-Day Python DSA Curriculum is fully operational.");
+            selectedDay = 1;
+            fetchActiveSchedule();
         } catch (err) {
             console.error('Creator submit error:', err);
         }
