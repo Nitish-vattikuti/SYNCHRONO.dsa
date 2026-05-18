@@ -5,7 +5,33 @@
 // Base API URL - served from same host
 const API_BASE = window.location.origin;
 
-const CLOUD_STATE_ID = 'ff8081819d82fab6019e3afe29af4e47';
+const APP_KEY = '001crexc';
+
+async function getCloudVal(key) {
+    try {
+        const res = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${APP_KEY}/${key}`);
+        if (res.ok) {
+            const val = await res.json();
+            return val || '';
+        }
+    } catch (e) {
+        console.warn(`Error fetching cloud key ${key}:`, e);
+    }
+    return '';
+}
+
+async function setCloudVal(key, val) {
+    try {
+        const res = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${APP_KEY}/${key}/${encodeURIComponent(val)}`, {
+            method: 'POST',
+            headers: { 'Content-Length': '0' }
+        });
+        return res.ok;
+    } catch (e) {
+        console.error(`Error saving cloud key ${key}:`, e);
+    }
+    return false;
+}
 
 const dsaChapters = [
     { course: 1, ch: 1, title: 'Algorithms Intro', desc: 'What algorithms are and why efficiency matters in software engineering.' },
@@ -119,20 +145,10 @@ function generateLocalScheduleItems() {
     return items;
 }
 
-function calculateLocalStreak(completionsObj, reflectionsObj) {
-    const activeDates = new Set();
+function calculateLocalStreak(activeDatesArray) {
+    if (!activeDatesArray || !activeDatesArray.length) return 0;
     
-    if (completionsObj) {
-        Object.values(completionsObj).forEach(dateStr => {
-            activeDates.add(dateStr);
-        });
-    }
-    
-    if (reflectionsObj) {
-        Object.keys(reflectionsObj).forEach(dateStr => {
-            activeDates.add(dateStr);
-        });
-    }
+    const activeDates = new Set(activeDatesArray);
     
     const getLocalDateString = (d) => {
         const year = d.getFullYear();
@@ -302,55 +318,49 @@ function initCoopPolling() {
         if (!currentUser || !coopState || !coopState.is_linked) return;
         
         try {
-            const res = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`);
-            if (res.ok) {
-                const raw = await res.json();
-                const cloudData = raw.data;
+            const friendUsername = currentUser.username === 'nitish_v' ? 'pallavi' : 'nitish_v';
+            
+            const rawMyComps = await getCloudVal(`${currentUser.username}_completions`);
+            const rawFriendComps = await getCloudVal(`${friendUsername}_completions`);
+            
+            const myCompletions = rawMyComps ? rawMyComps.split(',').map(Number) : [];
+            const friendCompletions = rawFriendComps ? rawFriendComps.split(',').map(Number) : [];
+            
+            const newFriendIds = friendCompletions.slice().sort();
+            const oldFriendIds = (coopState.friend_completed_ids || []).slice().sort();
+            const newMyIds = myCompletions.slice().sort();
+            const oldMyIds = (coopState.my_completed_ids || []).slice().sort();
+            
+            const friendChanged = JSON.stringify(newFriendIds) !== JSON.stringify(oldFriendIds);
+            const myChanged = JSON.stringify(newMyIds) !== JSON.stringify(oldMyIds);
+            
+            if (friendChanged || myChanged) {
+                const rawMyDates = await getCloudVal(`${currentUser.username}_active_dates`);
+                const rawFriendDates = await getCloudVal(`${friendUsername}_active_dates`);
                 
-                const myCompletions = currentUser.username === 'nitish_v' 
-                    ? (cloudData.nitish_v_completions || {}) 
-                    : (cloudData.pallavi_completions || {});
-                    
-                const friendCompletions = currentUser.username === 'nitish_v' 
-                    ? (cloudData.pallavi_completions || {}) 
-                    : (cloudData.nitish_v_completions || {});
+                const myDates = rawMyDates ? rawMyDates.split(',') : [];
+                const friendDates = rawFriendDates ? rawFriendDates.split(',') : [];
                 
-                const newFriendIds = Object.keys(friendCompletions).map(Number).sort();
-                const oldFriendIds = (coopState.friend_completed_ids || []).slice().sort();
-                const newMyIds = Object.keys(myCompletions).map(Number).sort();
-                const oldMyIds = (coopState.my_completed_ids || []).slice().sort();
+                const myStreak = calculateLocalStreak(myDates);
+                const friendStreak = calculateLocalStreak(friendDates);
                 
-                const friendChanged = JSON.stringify(newFriendIds) !== JSON.stringify(oldFriendIds);
-                const myChanged = JSON.stringify(newMyIds) !== JSON.stringify(oldMyIds);
+                coopState = {
+                    is_linked: true,
+                    friend_username: friendUsername,
+                    my_completed_ids: myCompletions,
+                    friend_completed_ids: friendCompletions,
+                    my_streak: myStreak,
+                    friend_streak: friendStreak
+                };
                 
-                if (friendChanged || myChanged) {
-                    const myStreak = calculateLocalStreak(
-                        myCompletions,
-                        currentUser.username === 'nitish_v' ? cloudData.nitish_v_reflections : cloudData.pallavi_reflections
-                    );
-                    const friendStreak = calculateLocalStreak(
-                        friendCompletions,
-                        currentUser.username === 'nitish_v' ? cloudData.pallavi_reflections : cloudData.nitish_v_reflections
-                    );
-                    
-                    coopState = {
-                        is_linked: true,
-                        friend_username: currentUser.username === 'nitish_v' ? 'pallavi' : 'nitish_v',
-                        my_completed_ids: Object.keys(myCompletions).map(Number),
-                        friend_completed_ids: Object.keys(friendCompletions).map(Number),
-                        my_streak: myStreak,
-                        friend_streak: friendStreak
-                    };
-                    
-                    renderCoopHub();
-                    renderTimelineCards();
-                    renderWeeklyChart();
-                }
+                renderCoopHub();
+                renderTimelineCards();
+                renderWeeklyChart();
             }
         } catch (e) {
             console.warn("Co-Op background polling failed:", e);
         }
-    }, 5000); // 5-second polling intervals for extreme responsiveness
+    }, 10000); // 10-second polling intervals for excellent rate management
 }
 
 // Authentication Forms setup
@@ -482,10 +492,12 @@ async function fetchActiveSchedule() {
     if (!currentUser) return;
     
     try {
-        const res = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`);
-        if (!res.ok) throw new Error('Cloud fetch failed.');
-        const raw = await res.json();
-        const cloudData = raw.data;
+        const friendUsername = currentUser.username === 'nitish_v' ? 'pallavi' : 'nitish_v';
+        
+        const nitishCompsRaw = await getCloudVal('nitish_v_completions');
+        const pallaviCompsRaw = await getCloudVal('pallavi_completions');
+        const nitishDatesRaw = await getCloudVal('nitish_v_active_dates');
+        const pallaviDatesRaw = await getCloudVal('pallavi_active_dates');
         
         activeSchedule = {
             id: 1,
@@ -497,28 +509,23 @@ async function fetchActiveSchedule() {
             items: generateLocalScheduleItems()
         };
         
-        const myCompletions = currentUser.username === 'nitish_v' 
-            ? (cloudData.nitish_v_completions || {}) 
-            : (cloudData.pallavi_completions || {});
-            
-        const friendCompletions = currentUser.username === 'nitish_v' 
-            ? (cloudData.pallavi_completions || {}) 
-            : (cloudData.nitish_v_completions || {});
-            
-        const myStreak = calculateLocalStreak(
-            myCompletions,
-            currentUser.username === 'nitish_v' ? cloudData.nitish_v_reflections : cloudData.pallavi_reflections
-        );
-        const friendStreak = calculateLocalStreak(
-            friendCompletions,
-            currentUser.username === 'nitish_v' ? cloudData.pallavi_reflections : cloudData.nitish_v_reflections
-        );
+        const nitishComps = nitishCompsRaw ? nitishCompsRaw.split(',').map(Number) : [];
+        const pallaviComps = pallaviCompsRaw ? pallaviCompsRaw.split(',').map(Number) : [];
+        
+        const myCompletions = currentUser.username === 'nitish_v' ? nitishComps : pallaviComps;
+        const friendCompletions = currentUser.username === 'nitish_v' ? pallaviComps : nitishComps;
+        
+        const nitishDates = nitishDatesRaw ? nitishDatesRaw.split(',') : [];
+        const pallaviDates = pallaviDatesRaw ? pallaviDatesRaw.split(',') : [];
+        
+        const myStreak = calculateLocalStreak(currentUser.username === 'nitish_v' ? nitishDates : pallaviDates);
+        const friendStreak = calculateLocalStreak(currentUser.username === 'nitish_v' ? pallaviDates : nitishDates);
         
         coopState = {
             is_linked: true,
-            friend_username: currentUser.username === 'nitish_v' ? 'pallavi' : 'nitish_v',
-            my_completed_ids: Object.keys(myCompletions).map(Number),
-            friend_completed_ids: Object.keys(friendCompletions).map(Number),
+            friend_username: friendUsername,
+            my_completed_ids: myCompletions,
+            friend_completed_ids: friendCompletions,
             my_streak: myStreak,
             friend_streak: friendStreak
         };
@@ -720,60 +727,52 @@ window.toggleItemCompletion = async function(itemId, checkbox) {
     }
     
     try {
-        const getRes = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`);
-        if (!getRes.ok) throw new Error('Cloud fetch failed for update.');
-        const raw = await getRes.json();
-        const cloudData = raw.data;
-        
         const username = currentUser.username;
-        const completionsKey = `${username}_completions`;
+        const compsKey = `${username}_completions`;
+        const datesKey = `${username}_active_dates`;
         
-        if (!cloudData[completionsKey]) {
-            cloudData[completionsKey] = {};
+        const rawComps = await getCloudVal(compsKey);
+        let comps = rawComps ? rawComps.split(',').map(Number) : [];
+        
+        if (isChecked) {
+            if (!comps.includes(itemId)) comps.push(itemId);
+        } else {
+            comps = comps.filter(id => id !== itemId);
         }
         
-        // Form YYYY-MM-DD
+        // Save completions
+        await setCloudVal(compsKey, comps.join(','));
+        
+        // Save active date for streak
         const now = new Date();
         const yyyy = now.getFullYear();
         const mm = String(now.getMonth() + 1).padStart(2, '0');
         const dd = String(now.getDate()).padStart(2, '0');
         const todayStr = `${yyyy}-${mm}-${dd}`;
         
+        const rawDates = await getCloudVal(datesKey);
+        let dates = rawDates ? rawDates.split(',') : [];
+        if (!dates.includes(todayStr)) {
+            dates.push(todayStr);
+            await setCloudVal(datesKey, dates.join(','));
+        }
+        
         if (isChecked) {
-            cloudData[completionsKey][itemId] = todayStr;
-        } else {
-            delete cloudData[completionsKey][itemId];
-        }
-        
-        const putRes = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: "SynchronoDSASharedState",
-                data: cloudData
-            })
-        });
-        
-        if (putRes.ok) {
-            if (isChecked) {
-                coopState.my_completed_ids.push(itemId);
-                playCyberAlarm('success');
-                
-                confetti({
-                    particleCount: 80,
-                    spread: 60,
-                    origin: { y: 0.8 },
-                    colors: ['#06b6d4', '#a855f7', '#10b981']
-                });
-            } else {
-                coopState.my_completed_ids = coopState.my_completed_ids.filter(id => id !== itemId);
-            }
+            coopState.my_completed_ids.push(itemId);
+            playCyberAlarm('success');
             
-            // Re-render and calculate streaks dynamically
-            fetchActiveSchedule();
+            confetti({
+                particleCount: 80,
+                spread: 60,
+                origin: { y: 0.8 },
+                colors: ['#06b6d4', '#a855f7', '#10b981']
+            });
         } else {
-            throw new Error('Cloud write failed.');
+            coopState.my_completed_ids = coopState.my_completed_ids.filter(id => id !== itemId);
         }
+        
+        // Re-render and calculate streaks dynamically
+        fetchActiveSchedule();
     } catch (e) {
         console.error('Completions toggle API fail:', e);
         playCyberAlarm('error');
@@ -1163,32 +1162,21 @@ async function triggerNotesReflectionSave() {
     saveStatus.innerHTML = `<span class="pulse-saving mr-1 inline-block w-2 h-2 rounded-full bg-accent animate-ping"></span> Saving...`;
     
     try {
-        const getRes = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`);
-        if (!getRes.ok) throw new Error('Cloud fetch failed for save.');
-        const raw = await getRes.json();
-        const cloudData = raw.data;
+        const valueToken = `${notesVal}|||${moodVal}`;
+        const key = `${currentUser.username}_refl_${dateToken}`;
+        const ok = await setCloudVal(key, valueToken);
         
-        const reflectionsKey = `${currentUser.username}_reflections`;
-        if (!cloudData[reflectionsKey]) {
-            cloudData[reflectionsKey] = {};
-        }
-        
-        cloudData[reflectionsKey][dateToken] = {
-            notes: notesVal,
-            mood: moodVal
-        };
-        
-        const putRes = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: "SynchronoDSASharedState",
-                data: cloudData
-            })
-        });
-        
-        if (putRes.ok) {
+        if (ok) {
             saveStatus.innerHTML = `<i data-lucide="check" class="w-3 h-3 inline mr-1 text-accent"></i> Synced to Cloud`;
+            
+            // Ensure today is marked active for day streaks
+            const datesKey = `${currentUser.username}_active_dates`;
+            const rawDates = await getCloudVal(datesKey);
+            let dates = rawDates ? rawDates.split(',') : [];
+            if (!dates.includes(dateToken)) {
+                dates.push(dateToken);
+                await setCloudVal(datesKey, dates.join(','));
+            }
         } else {
             throw new Error('Cloud write failed.');
         }
@@ -1207,22 +1195,24 @@ async function fetchReflectionLog() {
     const moodBtns = document.querySelectorAll('.mood-btn');
     
     try {
-        const getRes = await fetch(`https://api.restful-api.dev/objects/${CLOUD_STATE_ID}`);
-        if (getRes.ok) {
-            const raw = await getRes.json();
-            const cloudData = raw.data;
+        const key = `${currentUser.username}_refl_${dateToken}`;
+        const raw = await getCloudVal(key);
+        
+        if (raw) {
+            const parts = raw.split('|||');
+            const notes = parts[0] || '';
+            const mood = parts[1] || '';
             
-            const reflectionsKey = `${currentUser.username}_reflections`;
-            const userReflections = cloudData[reflectionsKey] || {};
-            const todayLog = userReflections[dateToken] || { notes: '', mood: '' };
-            
-            textEl.value = todayLog.notes || '';
+            textEl.value = notes;
             
             document.querySelector('.mood-btn.active')?.classList.remove('active');
-            if (todayLog.mood) {
-                const targetMood = Array.from(moodBtns).find(btn => btn.getAttribute('data-mood') === todayLog.mood);
+            if (mood) {
+                const targetMood = Array.from(moodBtns).find(btn => btn.getAttribute('data-mood') === mood);
                 targetMood?.classList.add('active');
             }
+        } else {
+            textEl.value = '';
+            document.querySelector('.mood-btn.active')?.classList.remove('active');
         }
     } catch (e) {
         console.warn('Reflection fetch error:', e);
