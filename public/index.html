@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synchronize DSA - Premium Interactive Co-Op Scheduler</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons (CDN) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Chart.js (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Canvas Confetti (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Local Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ==========================================
+         AUTH OVERLAY SCREEN (Login / Register)
+         ========================================== -->
+    <div id="auth-overlay" class="auth-overlay">
+        <div class="auth-glow-bg"></div>
+        <div class="auth-card glass-panel">
+            <div class="auth-header">
+                <div class="logo-glow">
+                    <i data-lucide="terminal" class="logo-icon"></i>
+                    <span>SYNCHRONO<span class="highlight">.dsa</span></span>
+                </div>
+                <p id="auth-subtitle" class="text-secondary">Accelerate your DSA journey with structural discipline</p>
+            </div>
+            
+            <!-- Forms -->
+            <form id="auth-form" class="auth-form">
+                <div class="form-group">
+                    <label for="auth-username"><i data-lucide="user" class="input-icon"></i> Username</label>
+                    <input type="text" id="auth-username" required autocomplete="username" placeholder="e.g. nitish_v">
+                </div>
+                
+                <div class="form-group">
+                    <label for="auth-password"><i data-lucide="lock" class="input-icon"></i> Password</label>
+                    <input type="password" id="auth-password" required autocomplete="current-password" placeholder="••••••••">
+                </div>
+                
+                <div id="auth-error" class="alert error hidden"></div>
+                <div id="auth-success" class="alert success hidden"></div>
+                
+                <button type="submit" id="auth-submit-btn" class="btn primary-glow btn-full">
+                    <span>Login Workspace</span>
+                    <i data-lucide="arrow-right"></i>
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                <p id="auth-toggle-text">Don't have an account? <a href="#" id="auth-toggle-link">Create Account</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MAIN APPLICATION STRUCTURE
+         ========================================== -->
+    <div id="app-container" class="app-layout hidden">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar-nav glass-panel">
+            <div class="sidebar-brand">
+                <div class="logo-glow">
+                    <i data-lucide="terminal" class="logo-icon"></i>
+                    <span>SYNCHRONO<span class="highlight">.dsa</span></span>
+                </div>
+            </div>
+            
+            <!-- User Status Card -->
+            <div class="user-status-card glass-subpanel">
+                <div class="user-avatar-container">
+                    <div class="user-avatar" id="nav-avatar">NV</div>
+                    <div class="online-indicator"></div>
+                </div>
+                <div class="user-info">
+                    <div class="username-row">
+                        <span id="nav-username" class="username">Nitish V</span>
+                    </div>
+                    <div class="streak-badge">
+                        <i data-lucide="flame" class="streak-icon glow-flame"></i>
+                        <span id="nav-streak">3 Day Streak</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Schedule Controls -->
+            <div class="sidebar-section">
+                <h3>TIMETABLES</h3>
+                <div class="schedule-selector-list">
+                    <button class="schedule-tab active" id="btn-default-schedule">
+                        <i data-lucide="list-todo"></i>
+                        <span>30-Day Python DSA</span>
+                    </button>
+                    <div id="custom-schedules-list">
+                        <!-- Custom Schedules injected here -->
+                    </div>
+                </div>
+                
+                <button class="btn secondary-glow btn-full mt-3" id="btn-open-creator">
+                    <i data-lucide="plus-circle"></i>
+                    <span>Create Custom Schedule</span>
+                </button>
+            </div>
+
+            <!-- Spacer -->
+            <div class="flex-grow"></div>
+            
+            <!-- Sidebar Footer / Logout -->
+            <div class="sidebar-footer">
+                <button id="btn-logout" class="btn text-danger">
+                    <i data-lucide="log-out"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard Workspace -->
+        <main class="main-workspace">
+            
+            <!-- Header Bar -->
+            <header class="workspace-header glass-panel">
+                <div class="header-left">
+                    <h1 id="schedule-title-display">30-Day Python DSA Schedule</h1>
+                    <div class="live-clock-badge">
+                        <span id="live-time">16:22:53</span>
+                        <span class="divider">|</span>
+                        <span id="live-date">May 18, 2026</span>
+                    </div>
+                </div>
+                
+                <!-- Live Task Pulse -->
+                <div class="header-right">
+                    <div class="active-pulse-widget" id="active-pulse-widget">
+                        <div class="pulse-indicator"></div>
+                        <div class="widget-text">
+                            <small>ACTIVE BLOCK NOW</small>
+                            <span id="pulse-task-name">Python DSA Chapter 12</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Co-Op Synchronization Hub -->
+            <section class="coop-sync-section glass-panel">
+                <div class="coop-header">
+                    <div class="coop-title-row">
+                        <i data-lucide="users" class="coop-brand-icon"></i>
+                        <div>
+                            <h2>Co-Op Synchronization Panel</h2>
+                            <p class="text-secondary text-xs">Learn collaboratively, track side-by-side and keep progress in sync</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Join / Code Actions -->
+                    <div class="coop-actions" id="coop-action-container">
+                        <!-- Generates invite code -->
+                        <div id="coop-unlinked-actions" class="flex gap-2">
+                            <button id="btn-gen-share-code" class="btn border-glow">
+                                <i data-lucide="share-2"></i>
+                                <span>Get Share Code</span>
+                            </button>
+                            <div class="input-action-group">
+                                <input type="text" id="join-code-input" placeholder="Enter Code e.g. SYNC-A3F2" class="glass-input text-xs uppercase">
+                                <button id="btn-join-code" class="btn primary-glow btn-compact">Join Friend</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Linked Friend Status -->
+                        <div id="coop-linked-actions" class="hidden">
+                            <div class="linked-friend-card">
+                                <span class="badge success-badge">Linked Workspace</span>
+                                <span class="friend-name">Partner: <strong id="friend-username-display">Friend</strong></span>
+                                <button id="btn-unlink-coop" class="btn btn-danger btn-compact">
+                                    <i data-lucide="user-minus"></i>
+                                    <span>Unlink</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Comparison Dashboard -->
+                <div class="coop-progress-comparison" id="coop-progress-panel">
+                    <div class="progress-bar-column">
+                        <div class="progress-labels">
+                            <span>Your Progress</span>
+                            <span id="my-completion-percentage" class="percentage-label font-bold text-cyan">0%</span>
+                        </div>
+                        <div class="progress-track-bg">
+                            <div class="progress-bar-fill fill-cyan" id="my-progress-bar" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-stats">
+                            <span id="my-progress-fraction">0 / 0 Completed</span>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar-column disabled-opacity" id="friend-progress-col">
+                        <div class="progress-labels">
+                            <span>Friend's Progress</span>
+                            <span id="friend-completion-percentage" class="percentage-label font-bold text-purple">0%</span>
+                        </div>
+                        <div class="progress-track-bg">
+                            <div class="progress-bar-fill fill-purple" id="friend-progress-bar" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-stats">
+                            <span id="friend-progress-fraction">Not linked</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Day Navigation Timeline Selector -->
+            <div class="day-navigation-wrapper glass-panel">
+                <button class="nav-arrow prev-day" id="btn-prev-day"><i data-lucide="chevron-left"></i></button>
+                <div class="day-scroll-container" id="day-selector-container">
+                    <!-- Days 1 to 30 injected here dynamically -->
+                </div>
+                <button class="nav-arrow next-day" id="btn-next-day"><i data-lucide="chevron-right"></i></button>
+            </div>
+
+            <!-- The Daily Checklist & Cards Grid -->
+            <section class="checklist-grid">
+                <div class="timeline-headline">
+                    <i data-lucide="calendar-days"></i>
+                    <span>Timeline Agenda for <strong id="current-day-badge">Day 1</strong></span>
+                </div>
+                
+                <div id="timeline-cards-container" class="timeline-cards-container">
+                    <!-- Cards will be populated dynamically -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Right Side Widgets Panel -->
+        <aside class="right-widgets-aside">
+            
+            <!-- Circular Pomodoro Focus Timer -->
+            <section class="widget-timer glass-panel">
+                <div class="widget-header">
+                    <i data-lucide="timer" class="timer-title-icon"></i>
+                    <h3>FOCUS TIMER</h3>
+                </div>
+                
+                <div class="timer-display-container">
+                    <svg class="timer-ring-svg" width="160" height="160">
+                        <circle class="timer-ring-circle-bg" stroke="rgba(255,255,255,0.05)" stroke-width="6" fill="transparent" r="70" cx="80" cy="80"/>
+                        <circle class="timer-ring-circle" id="timer-progress-ring" stroke="var(--accent-cyan)" stroke-width="6" fill="transparent" r="70" cx="80" cy="80" stroke-linecap="round"/>
+                    </svg>
+                    <div class="timer-digits-wrapper">
+                        <span id="timer-time-display" class="timer-time">25:00</span>
+                        <span id="timer-mode-display" class="timer-mode">Focus Session</span>
+                    </div>
+                </div>
+                
+                <div class="timer-controls">
+                    <button class="btn btn-compact border-glow" id="btn-timer-reset">Reset</button>
+                    <button class="btn btn-compact primary-glow" id="btn-timer-toggle">Start</button>
+                </div>
+                
+                <div class="timer-presets">
+                    <button class="preset-btn active" data-time="25" data-mode="Focus">25m</button>
+                    <button class="preset-btn" data-time="5" data-mode="Short Break">5m</button>
+                    <button class="preset-btn" data-time="15" data-mode="Long Break">15m</button>
+                </div>
+            </section>
+
+            <!-- Focus Reflection Log & Scratchpad -->
+            <section class="widget-notes glass-panel">
+                <div class="widget-header">
+                    <i data-lucide="notebook" class="notes-title-icon"></i>
+                    <h3>DAILY REFLECTION</h3>
+                </div>
+                
+                <div class="mood-selector">
+                    <span class="text-secondary text-xs block mb-1">Focus Energy Level:</span>
+                    <div class="mood-icons">
+                        <button class="mood-btn" data-mood="super" title="Highly Focused">⚡</button>
+                        <button class="mood-btn" data-mood="good" title="Steady Focus">🧠</button>
+                        <button class="mood-btn" data-mood="average" title="Average / Distracted">😐</button>
+                        <button class="mood-btn" data-mood="tired" title="Exhausted / Burned Out">💤</button>
+                    </div>
+                </div>
+                
+                <div class="scratchpad-container">
+                    <span class="text-secondary text-xs block mb-1">Scratchpad / Quick Notes:</span>
+                    <textarea id="notes-textarea" placeholder="Paste python code snippets, write Leetcode problem numbers, or capture key takeaways here..."></textarea>
+                    <div class="notes-footer">
+                        <span id="notes-save-status" class="text-xs text-secondary">
+                            <i data-lucide="check" class="w-3 h-3 inline mr-1"></i> Auto-saved locally
+                        </span>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Performance Chart -->
+            <section class="widget-analytics glass-panel">
+                <div class="widget-header">
+                    <i data-lucide="line-chart" class="analytics-title-icon"></i>
+                    <h3>WEEKLY WORKLOAD</h3>
+                </div>
+                <div class="chart-canvas-container">
+                    <canvas id="weeklyProgressChart"></canvas>
+                </div>
+            </section>
+        </aside>
+    </div>
+
+    <!-- ==========================================
+         MODALS & OVERLAYS
+         ========================================== -->
+    
+    <!-- Custom Schedule Creator Modal -->
+    <div id="creator-modal" class="modal-overlay hidden">
+        <div class="modal-card glass-panel max-w-lg">
+            <div class="modal-header">
+                <h2>Create Custom Timetable</h2>
+                <button class="btn-close-modal" id="btn-close-creator"><i data-lucide="x"></i></button>
+            </div>
+            
+            <form id="creator-form">
+                <div class="form-group">
+                    <label for="custom-sched-name">Schedule Title</label>
+                    <input type="text" id="custom-sched-name" required placeholder="e.g. My Custom Coding Bootcamp">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="custom-sched-days">Duration (Days)</label>
+                        <input type="number" id="custom-sched-days" required min="1" max="60" value="7">
+                    </div>
+                </div>
+                
+                <div class="custom-items-builder">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-xs">Timeline Items</span>
+                        <button type="button" id="btn-add-item-row" class="btn btn-compact border-glow">
+                            <i data-lucide="plus"></i> Add Time Block
+                        </button>
+                    </div>
+                    
+                    <div class="items-scroll-box" id="modal-items-rows">
+                        <!-- Custom rows populated here -->
+                    </div>
+                </div>
+                
+                <div class="modal-footer mt-4">
+                    <button type="button" class="btn border-glow" id="btn-cancel-creator">Cancel</button>
+                    <button type="submit" class="btn primary-glow">Create Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Co-Op Completion Unlinking Choice Modal -->
+    <div id="unlink-modal" class="modal-overlay hidden">
+        <div class="modal-card glass-panel text-center max-w-md">
+            <div class="completion-medal">🎓</div>
+            <h2 class="mt-2 text-xl font-extrabold text-glow-cyan">Schedule Milestone Reached!</h2>
+            <p class="text-secondary text-sm mt-2">
+                Congratulations on executing your interactive routine! As you finish or transition from this co-op timeline, choose how to manage your linked state:
+            </p>
+            
+            <div class="unlink-choices mt-4">
+                <button class="btn primary-glow btn-full flex items-center justify-between" id="btn-unlink-branch">
+                    <div class="text-left">
+                        <span class="block font-bold">Unlink & Save Progress</span>
+                        <small class="block text-secondary text-xs">Duplicate shared schedule blueprint to a private copy to keep your completion history.</small>
+                    </div>
+                    <i data-lucide="copy" class="w-6 h-6"></i>
+                </button>
+                
+                <button class="btn border-glow btn-full flex items-center justify-between mt-2" id="btn-unlink-clean">
+                    <div class="text-left">
+                        <span class="block font-bold text-danger">Unlink & Delete Connections</span>
+                        <small class="block text-secondary text-xs">Detach from this shared routine entirely and start a fresh individual timeline.</small>
+                    </div>
+                    <i data-lucide="trash-2" class="w-6 h-6 text-danger"></i>
+                </button>
+                
+                <button class="btn text-secondary btn-full mt-2" id="btn-unlink-keep">
+                    <span>Keep Workspace Shared</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Co-Op Share Code Display Modal -->
+    <div id="share-modal" class="modal-overlay hidden">
+        <div class="modal-card glass-panel text-center max-w-md">
+            <div class="completion-medal">🔗</div>
+            <h2 class="mt-2 text-xl font-extrabold text-glow-cyan">Your Co-Op Invite Code</h2>
+            <p class="text-secondary text-sm mt-2">
+                Share this unique sync code with your friend. Once they enter it on their Synchrono dashboard, your timetables will link up side-by-side!
+            </p>
+            
+            <div class="share-code-box">
+                <span id="share-code-value" class="share-code-text">SYNC-XXXX</span>
+            </div>
+            
+            <div class="flex gap-2 mt-4">
+                <button type="button" class="btn primary-glow flex-1 flex items-center justify-center gap-1" id="btn-copy-share-code">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                    <span>Copy Code</span>
+                </button>
+                <button type="button" class="btn border-glow flex-1" id="btn-close-share-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lucide Initialization & Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
